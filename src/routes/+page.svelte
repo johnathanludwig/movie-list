@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PersistedState } from 'runed';
 	import { movies, year, endDate } from '$lib/movies';
+	import { unsullied } from '$lib/settings.svelte';
 	import AvailableMovies from '$lib/components/AvailableMovies.svelte';
 	import PicksList from '$lib/components/PicksList.svelte';
 
@@ -67,16 +68,26 @@
 				Pick movies and drag to rank them &bull; {pickCount}/13 picked
 			</p>
 		</div>
-		<button
-			type="button"
-			onclick={handleReset}
-			disabled={pickCount === 0}
-			class="shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 {confirmingReset
-				? 'border-red-600 bg-red-600 text-white hover:bg-red-700'
-				: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}"
-		>
-			{confirmingReset ? 'Click again to confirm' : 'Reset list'}
-		</button>
+		<div class="flex shrink-0 items-center gap-4">
+			<label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+				<input
+					type="checkbox"
+					bind:checked={unsullied.current}
+					class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+				/>
+				Unsullied
+			</label>
+			<button
+				type="button"
+				onclick={handleReset}
+				disabled={pickCount === 0}
+				class="rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 {confirmingReset
+					? 'border-red-600 bg-red-600 text-white hover:bg-red-700'
+					: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}"
+			>
+				{confirmingReset ? 'Click again to confirm' : 'Reset list'}
+			</button>
+		</div>
 	</header>
 
 	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2" style="height: calc(100vh - 160px);">

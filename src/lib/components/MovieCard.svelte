@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Movie } from '$lib/movies';
+	import { unsullied } from '$lib/settings.svelte';
 	import MovieLinks from './MovieLinks.svelte';
 
 	type Props = {
@@ -72,7 +73,13 @@
 	tabindex={onclick && !disabled ? 0 : undefined}
 >
 	{#if posterUrl}
-		<img src={posterUrl} alt={movie.name} class="h-14 w-10 rounded object-cover" />
+		<div class="h-14 w-10 overflow-hidden rounded">
+			<img
+				src={posterUrl}
+				alt={movie.name}
+				class="h-full w-full object-cover transition {unsullied.current ? 'blur-md' : ''}"
+			/>
+		</div>
 	{:else}
 		<div class="flex h-14 w-10 items-center justify-center rounded bg-slate-100 text-slate-400">
 			<span class="text-xs">?</span>
