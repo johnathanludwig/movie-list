@@ -14,37 +14,18 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { Attachment } from 'svelte/attachments';
 	import { flip } from 'svelte/animate';
-	import type { Movie } from '$lib/movies';
+	import { moviesByImdbId, endDate } from '$lib/movies';
+	import { picks } from '$lib/picks.svelte';
 	import MovieCard from './MovieCard.svelte';
 	import DropIndicator from './DropIndicator.svelte';
 	import { getMovieDragData, isMovieDragData } from './drag-data';
 
-	type Pick = {
-		imdbId: string;
-		position: number;
-	};
-
 	type Props = {
-		picks: Pick[];
-		movies: Record<string, Movie>;
-		onRemove: (imdbId: string) => void;
-		onReorder: (imdbIds: string[]) => void;
-		onAdd?: (imdbId: string) => void;
 		disabled?: boolean;
 		requiredCount?: number;
-		endDate?: string;
 	};
 
-	let {
-		picks,
-		movies,
-		onRemove,
-		onReorder,
-		onAdd,
-		disabled = false,
-		requiredCount = 13,
-		endDate,
-	}: Props = $props();
+	let { disabled = false, requiredCount = 13 }: Props = $props();
 
 	// Track drag state per pick
 	type DragState = { type: 'idle' } | { type: 'dragging' } | { type: 'over'; closestEdge: Edge };
@@ -63,10 +44,7 @@
 		dragStates.delete(imdbId);
 	}
 
-	const sortedPicks = $derived([...picks].sort((a, b) => a.position - b.position));
-	const pickCount = $derived(picks.length);
-	const neededCount = $derived(Math.max(0, requiredCount - pickCount));
-	const pickedImdbIds = $derived(new Set(picks.map((p) => p.imdbId)));
+	const neededCount = $derived(Math.max(0, requiredCount - picks.count));
 
 	// Monitor for drops at the list level
 	onMount(() => {
@@ -84,10 +62,8 @@
 				if (!isMovieDragData(sourceData)) return;
 
 				// Handle drop from available movies onto the container (add at end)
-				if (sourceData.source === 'available' && targetData.type === 'picks-container' && onAdd) {
-					if (!pickedImdbIds.has(sourceData.imdbId)) {
-						onAdd(sourceData.imdbId);
-					}
+				if (sourceData.source === 'available' && targetData.type === 'picks-container') {
+					picks.add(sourceData.imdbId);
 					return;
 				}
 
@@ -97,16 +73,16 @@
 					isMovieDragData(targetData) &&
 					targetData.source === 'picks'
 				) {
-					if (!pickedImdbIds.has(sourceData.imdbId)) {
-						const indexOfTarget = sortedPicks.findIndex((p) => p.imdbId === targetData.imdbId);
+					if (!picks.pickedIds.has(sourceData.imdbId)) {
+						const indexOfTarget = picks.items.findIndex((p) => p.imdbId === targetData.imdbId);
 						const closestEdge = extractClosestEdge(targetData);
 
 						// Build new order with the movie inserted at the right position
-						const newOrder = sortedPicks.map((p) => p.imdbId);
+						const newOrder = picks.items.map((p) => p.imdbId);
 						const insertIndex = closestEdge === 'top' ? indexOfTarget : indexOfTarget + 1;
 						newOrder.splice(insertIndex, 0, sourceData.imdbId);
 
-						onReorder(newOrder);
+						picks.reorder(newOrder);
 					}
 					return;
 				}
@@ -117,22 +93,22 @@
 					isMovieDragData(targetData) &&
 					targetData.source === 'picks'
 				) {
-					const indexOfSource = sortedPicks.findIndex((p) => p.imdbId === sourceData.imdbId);
-					const indexOfTarget = sortedPicks.findIndex((p) => p.imdbId === targetData.imdbId);
+					const indexOfSource = picks.items.findIndex((p) => p.imdbId === sourceData.imdbId);
+					const indexOfTarget = picks.items.findIndex((p) => p.imdbId === targetData.imdbId);
 
 					if (indexOfTarget < 0 || indexOfSource < 0) return;
 
 					const closestEdgeOfTarget = extractClosestEdge(targetData);
 
 					const newOrder = reorderWithEdge({
-						list: sortedPicks,
+						list: picks.items,
 						startIndex: indexOfSource,
 						indexOfTarget,
 						closestEdgeOfTarget,
 						axis: 'vertical',
 					});
 
-					onReorder(newOrder.map((p) => p.imdbId));
+					picks.reorder(newOrder.map((p) => p.imdbId));
 				}
 			},
 		});
@@ -157,7 +133,7 @@
 					if (!isMovieDragData(data)) return false;
 					// Accept drops from picks (reorder) or available (add)
 					if (data.source === 'picks') return source.element !== element;
-					if (data.source === 'available') return !pickedImdbIds.has(data.imdbId);
+					if (data.source === 'available') return !picks.pickedIds.has(data.imdbId);
 					return false;
 				},
 				getData: ({ input }) =>
@@ -191,14 +167,14 @@
 	// Make the container a drop target for adding movies at the end
 	function makeContainerDropTarget(): Attachment<HTMLElement> {
 		return (element) => {
-			if (disabled || !onAdd) return;
+			if (disabled) return;
 
 			const cleanup = dropTargetForElements({
 				element,
 				canDrop: ({ source }) => {
 					const data = source.data;
 					if (!isMovieDragData(data)) return false;
-					return data.source === 'available' && !pickedImdbIds.has(data.imdbId);
+					return data.source === 'available' && !picks.pickedIds.has(data.imdbId);
 				},
 				getData: () => ({ type: 'picks-container' }),
 				onDragEnter: () => {
@@ -224,7 +200,7 @@
 	{@attach makeContainerDropTarget()}
 >
 	<h2 class="mb-3 text-lg font-semibold text-slate-900">
-		Your Picks ({pickCount}/{requiredCount})
+		Your Picks ({picks.count}/{requiredCount})
 		{#if isContainerDropTarget}
 			<span class="text-sm font-normal text-green-600">Drop to add</span>
 		{:else if neededCount > 0}
@@ -232,7 +208,7 @@
 		{/if}
 	</h2>
 	<div class="flex-1 space-y-2 pr-2">
-		{#if sortedPicks.length === 0}
+		{#if picks.items.length === 0}
 			<p class="py-8 text-center text-slate-400">
 				{#if isContainerDropTarget}
 					Drop here to add to your list
@@ -241,8 +217,8 @@
 				{/if}
 			</p>
 		{:else}
-			{#each sortedPicks as pick, index (pick.imdbId)}
-				{@const movie = movies[pick.imdbId]}
+			{#each picks.items as pick, index (pick.imdbId)}
+				{@const movie = moviesByImdbId[pick.imdbId]}
 				{@const isDarkHorse = index >= 10}
 				{@const state = getDragState(pick.imdbId)}
 				{@const isDragging = state.type === 'dragging'}
@@ -270,7 +246,7 @@
 							<MovieCard
 								{movie}
 								showRemove={!disabled}
-								onremove={() => onRemove(pick.imdbId)}
+								onremove={() => picks.remove(pick.imdbId)}
 								{disabled}
 								showLinks
 								{endDate}

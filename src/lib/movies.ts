@@ -296,3 +296,8 @@ export const movies: Movie[] = [
 		bomId: 'rl1334345729',
 	},
 ];
+
+// Lookup map for resolving a pick's IMDb ID back to its movie.
+export const moviesByImdbId: Record<string, Movie> = Object.fromEntries(
+	movies.map((m) => [m.imdbId, m]),
+);

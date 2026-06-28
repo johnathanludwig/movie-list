@@ -1,39 +1,9 @@
 <script lang="ts">
-	import { PersistedState } from 'runed';
-	import { movies, year, endDate } from '$lib/movies';
+	import { year } from '$lib/movies';
+	import { picks } from '$lib/picks.svelte';
 	import { unsullied } from '$lib/settings.svelte';
 	import AvailableMovies from '$lib/components/AvailableMovies.svelte';
 	import PicksList from '$lib/components/PicksList.svelte';
-
-	const moviesByImdbId = Object.fromEntries(movies.map((m) => [m.imdbId, m]));
-
-	// Ordered list of picked movie IMDb IDs, persisted to localStorage. Position is the array index.
-	const pickIds = new PersistedState<string[]>('movie-list:picks', []);
-
-	const pickedImdbIds = $derived(new Set(pickIds.current));
-	const pickCount = $derived(pickIds.current.length);
-
-	// Convert to the shape PicksList expects.
-	const picks = $derived(
-		pickIds.current.map((imdbId, index) => ({
-			imdbId,
-			position: index + 1,
-		})),
-	);
-
-	function handleAddPick(imdbId: string) {
-		if (!pickIds.current.includes(imdbId)) {
-			pickIds.current = [...pickIds.current, imdbId];
-		}
-	}
-
-	function handleRemovePick(imdbId: string) {
-		pickIds.current = pickIds.current.filter((id) => id !== imdbId);
-	}
-
-	function handleReorder(imdbIds: string[]) {
-		pickIds.current = imdbIds;
-	}
 
 	// Reset requires a second click to confirm, auto-cancelling after a few seconds.
 	let confirmingReset = $state(false);
@@ -50,7 +20,7 @@
 
 		clearTimeout(resetTimeout);
 		confirmingReset = false;
-		pickIds.current = [];
+		picks.reset();
 	}
 </script>
 
@@ -65,7 +35,7 @@
 				My List for Summer {year}
 			</h1>
 			<p class="mt-1 text-sm text-slate-500">
-				Pick movies and drag to rank them &bull; {pickCount}/13 picked
+				Pick movies and drag to rank them &bull; {picks.count}/13 picked
 			</p>
 		</div>
 		<div class="flex shrink-0 items-center gap-4">
@@ -80,7 +50,7 @@
 			<button
 				type="button"
 				onclick={handleReset}
-				disabled={pickCount === 0}
+				disabled={picks.count === 0}
 				class="rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 {confirmingReset
 					? 'border-red-600 bg-red-600 text-white hover:bg-red-700'
 					: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}"
@@ -92,23 +62,10 @@
 
 	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2" style="height: calc(100vh - 160px);">
 		<div class="flex flex-col rounded-lg bg-slate-100 p-4">
-			<AvailableMovies
-				{movies}
-				{pickedImdbIds}
-				onAddPick={handleAddPick}
-				onRemovePick={handleRemovePick}
-				{endDate}
-			/>
+			<AvailableMovies />
 		</div>
 		<div class="flex flex-col rounded-lg bg-slate-100 p-4">
-			<PicksList
-				{picks}
-				movies={moviesByImdbId}
-				onRemove={handleRemovePick}
-				onReorder={handleReorder}
-				onAdd={handleAddPick}
-				{endDate}
-			/>
+			<PicksList />
 		</div>
 	</div>
 </div>

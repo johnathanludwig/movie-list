@@ -7,27 +7,16 @@
 	import { onMount } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { Attachment } from 'svelte/attachments';
-	import type { Movie } from '$lib/movies';
+	import { movies, endDate } from '$lib/movies';
+	import { picks } from '$lib/picks.svelte';
 	import MovieCard from './MovieCard.svelte';
 	import { getMovieDragData, isMovieDragData } from './drag-data';
 
 	type Props = {
-		movies: Movie[];
-		pickedImdbIds: Set<string>;
-		onAddPick: (imdbId: string) => void;
-		onRemovePick?: (imdbId: string) => void;
 		disabled?: boolean;
-		endDate?: string;
 	};
 
-	let {
-		movies,
-		pickedImdbIds,
-		onAddPick,
-		onRemovePick,
-		disabled = false,
-		endDate,
-	}: Props = $props();
+	let { disabled = false }: Props = $props();
 
 	// Track drag state
 	type DragState = { type: 'idle' } | { type: 'dragging' };
@@ -52,7 +41,7 @@
 		),
 	);
 
-	const availableCount = $derived(movies.length - pickedImdbIds.size);
+	const availableCount = $derived(movies.length - picks.count);
 
 	// Monitor for drops - when a pick is dropped here, remove it
 	onMount(() => {
@@ -68,8 +57,8 @@
 				if (!isMovieDragData(sourceData)) return;
 
 				// Check if dropped on this component's container
-				if (target.data.type === 'available-container' && onRemovePick) {
-					onRemovePick(sourceData.imdbId);
+				if (target.data.type === 'available-container') {
+					picks.remove(sourceData.imdbId);
 				}
 			},
 		});
@@ -94,7 +83,7 @@
 	// Make the container a drop target for picks being removed
 	function makeDropTarget(): Attachment<HTMLElement> {
 		return (element) => {
-			if (disabled || !onRemovePick) return;
+			if (disabled) return;
 
 			const cleanup = dropTargetForElements({
 				element,
@@ -130,7 +119,7 @@
 	</h2>
 	<div class="flex-1 space-y-2 overflow-y-auto pr-2">
 		{#each sortedMovies as movie (movie.imdbId)}
-			{@const isPicked = pickedImdbIds.has(movie.imdbId)}
+			{@const isPicked = picks.has(movie.imdbId)}
 			{@const state = getDragState(movie.imdbId)}
 			{@const isDragging = state.type === 'dragging'}
 			{#if !isPicked}
@@ -141,7 +130,7 @@
 				>
 					<MovieCard
 						{movie}
-						onclick={() => onAddPick(movie.imdbId)}
+						onclick={() => picks.add(movie.imdbId)}
 						{disabled}
 						showLinks
 						{endDate}
