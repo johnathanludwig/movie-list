@@ -1,36 +1,55 @@
 <script lang="ts">
+	import { PersistedState } from 'runed';
 	import { movies, year, endDate } from '$lib/movies';
 	import AvailableMovies from '$lib/components/AvailableMovies.svelte';
 	import PicksList from '$lib/components/PicksList.svelte';
 
 	const moviesByImdbId = Object.fromEntries(movies.map((m) => [m.imdbId, m]));
 
-	// Ordered list of picked movie IMDb IDs. Position is the array index.
-	let pickIds = $state<string[]>([]);
+	// Ordered list of picked movie IMDb IDs, persisted to localStorage. Position is the array index.
+	const pickIds = new PersistedState<string[]>('movie-list:picks', []);
 
-	const pickedImdbIds = $derived(new Set(pickIds));
-	const pickCount = $derived(pickIds.length);
+	const pickedImdbIds = $derived(new Set(pickIds.current));
+	const pickCount = $derived(pickIds.current.length);
 
 	// Convert to the shape PicksList expects.
 	const picks = $derived(
-		pickIds.map((imdbId, index) => ({
+		pickIds.current.map((imdbId, index) => ({
 			imdbId,
 			position: index + 1,
 		})),
 	);
 
 	function handleAddPick(imdbId: string) {
-		if (!pickIds.includes(imdbId)) {
-			pickIds = [...pickIds, imdbId];
+		if (!pickIds.current.includes(imdbId)) {
+			pickIds.current = [...pickIds.current, imdbId];
 		}
 	}
 
 	function handleRemovePick(imdbId: string) {
-		pickIds = pickIds.filter((id) => id !== imdbId);
+		pickIds.current = pickIds.current.filter((id) => id !== imdbId);
 	}
 
 	function handleReorder(imdbIds: string[]) {
-		pickIds = imdbIds;
+		pickIds.current = imdbIds;
+	}
+
+	// Reset requires a second click to confirm, auto-cancelling after a few seconds.
+	let confirmingReset = $state(false);
+	let resetTimeout: ReturnType<typeof setTimeout> | undefined;
+
+	function handleReset() {
+		if (!confirmingReset) {
+			confirmingReset = true;
+			resetTimeout = setTimeout(() => {
+				confirmingReset = false;
+			}, 3000);
+			return;
+		}
+
+		clearTimeout(resetTimeout);
+		confirmingReset = false;
+		pickIds.current = [];
 	}
 </script>
 
@@ -39,13 +58,25 @@
 </svelte:head>
 
 <div class="mx-auto max-w-6xl px-4 py-6">
-	<header class="mb-6">
-		<h1 class="text-2xl font-bold text-slate-900">
-			My List for Summer {year}
-		</h1>
-		<p class="mt-1 text-sm text-slate-500">
-			Pick movies and drag to rank them &bull; {pickCount}/13 picked
-		</p>
+	<header class="mb-6 flex items-start justify-between gap-4">
+		<div>
+			<h1 class="text-2xl font-bold text-slate-900">
+				My List for Summer {year}
+			</h1>
+			<p class="mt-1 text-sm text-slate-500">
+				Pick movies and drag to rank them &bull; {pickCount}/13 picked
+			</p>
+		</div>
+		<button
+			type="button"
+			onclick={handleReset}
+			disabled={pickCount === 0}
+			class="shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 {confirmingReset
+				? 'border-red-600 bg-red-600 text-white hover:bg-red-700'
+				: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}"
+		>
+			{confirmingReset ? 'Click again to confirm' : 'Reset list'}
+		</button>
 	</header>
 
 	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2" style="height: calc(100vh - 160px);">

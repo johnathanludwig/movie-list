@@ -27,6 +27,7 @@
 	},
 	"dependencies": {
 		"@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
-		"@atlaskit/pragmatic-drag-and-drop-hitbox": "^2.0.0"
+		"@atlaskit/pragmatic-drag-and-drop-hitbox": "^2.0.0",
+		"runed": "^0.37.1"
 	}
 }
