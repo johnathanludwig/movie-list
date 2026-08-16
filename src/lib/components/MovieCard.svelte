@@ -24,7 +24,9 @@
 	}: Props = $props();
 
 	function formatDate(dateStr: string): string {
-		const date = new Date(dateStr);
+		// Parse as local midnight so the displayed day doesn't shift backward in
+		// timezones west of UTC (a bare 'YYYY-MM-DD' string parses as UTC).
+		const date = new Date(dateStr + 'T00:00:00');
 		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 	}
 
