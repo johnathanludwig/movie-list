@@ -36,6 +36,7 @@ async function dragMovie(
 	sourceTitle: string,
 	target: { onMovie: string; edge: 'top' | 'bottom' } | { onColumn: 'Available Movies' | 'Your Picks' }
 ): Promise<void> {
+	await page.getByText(sourceTitle, { exact: true }).first().waitFor();
 	await page.evaluate(
 		async ({ sourceTitle, target }) => {
 			const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));

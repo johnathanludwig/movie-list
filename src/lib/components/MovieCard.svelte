@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Movie } from '$lib/movies';
-	import { unsullied } from '$lib/settings.svelte';
+	import type { Movie } from '#lib/movies.js';
+	import { unsullied } from '#lib/settings.svelte.js';
 	import MovieLinks from './MovieLinks.svelte';
 
 	type Props = {

@@ -14,8 +14,8 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { Attachment } from 'svelte/attachments';
 	import { flip } from 'svelte/animate';
-	import { moviesByImdbId, endDate } from '$lib/movies';
-	import { picks } from '$lib/picks.svelte';
+	import { moviesByImdbId, endDate } from '#lib/movies.js';
+	import { picks } from '#lib/picks.svelte.js';
 	import MovieCard from './MovieCard.svelte';
 	import DropIndicator from './DropIndicator.svelte';
 	import { getMovieDragData, isMovieDragData } from './drag-data';

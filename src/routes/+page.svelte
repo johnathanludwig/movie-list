@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { year } from '$lib/movies';
-	import { picks } from '$lib/picks.svelte';
-	import { unsullied } from '$lib/settings.svelte';
-	import AvailableMovies from '$lib/components/AvailableMovies.svelte';
-	import PicksList from '$lib/components/PicksList.svelte';
+	import { year } from '#lib/movies.js';
+	import { picks } from '#lib/picks.svelte.js';
+	import { unsullied } from '#lib/settings.svelte.js';
+	import AvailableMovies from '#lib/components/AvailableMovies.svelte';
+	import PicksList from '#lib/components/PicksList.svelte';
 
 	// Reset requires a second click to confirm, auto-cancelling after a few seconds.
 	let confirmingReset = $state(false);

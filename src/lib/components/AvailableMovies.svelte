@@ -7,8 +7,8 @@
 	import { onMount } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { Attachment } from 'svelte/attachments';
-	import { movies, endDate } from '$lib/movies';
-	import { picks } from '$lib/picks.svelte';
+	import { movies, endDate } from '#lib/movies.js';
+	import { picks } from '#lib/picks.svelte.js';
 	import MovieCard from './MovieCard.svelte';
 	import { getMovieDragData, isMovieDragData } from './drag-data';
 
