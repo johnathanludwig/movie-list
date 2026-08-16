@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "movies-list",
+  "name": "movie-list",
   "compatibility_date": "2026-06-28",
   "compatibility_flags": [
     "nodejs_als"
