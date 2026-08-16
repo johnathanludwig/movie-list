@@ -3,9 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "imports": {
+    "#lib": "./src/lib/index.js",
+    "#lib/*": "./src/lib/*"
+  },
   "scripts": {
     "dev": "vite dev",
-    "build": "wrangler types --check && vite build",
+    "build": "vite build",
     "preview": "wrangler dev .svelte-kit/cloudflare/_worker.js --port 4173",
     "prepare": "svelte-kit sync || echo ''",
     "check": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -33,9 +37,5 @@
     "vite": "^8.2.1",
     "wrangler": "^4.123.0"
   },
-  "packageManager": "pnpm@11.22.0",
-  "imports": {
-    "#lib": "./src/lib/index.js",
-    "#lib/*": "./src/lib/*"
-  }
+  "packageManager": "pnpm@11.22.0"
 }
